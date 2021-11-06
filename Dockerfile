@@ -5,6 +5,7 @@ WORKDIR /app
 ADD . /app
 
 RUN pip install pip --upgrade
+RUN pip install Cython
 RUN pip install gunicorn
 RUN pip install --no-cache-dir -r requirements.txt
 
