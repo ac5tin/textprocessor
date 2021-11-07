@@ -33,10 +33,12 @@ def tokenise():
         output = []
 
         for text in texts:
-            if text["lang"] == "en":
-                tokens = en.tokenizer(text["text"])
-                output.append(sorted([{"token": token.orth_, "score": token.rank} for token in tokens if not token.is_space and
-                              not token.is_punct and len(token.orth_) >= 3 and (token.orth_ not in en.Defaults.stop_words)], key=lambda x: x["score"], reverse=True))
+            tokeniser = en.tokenizer if text["lang"] == "en" else zh.tokenizer
+            stopwords = en.Defaults.stop_words if text["lang"] == "en" else zh.Defaults.stop_words
+
+            tokens = tokeniser(text["text"])
+            output.append(sorted([{"token": token.orth_, "score": token.rank} for token in tokens if not token.is_space and
+                                  not token.is_punct and len(token.orth_) >= (2 if text["lang"] == "zh" else 3) and (token.orth_ not in stopwords)], key=lambda x: x["score"], reverse=True))
         return json.dumps(output)
     except Exception as e:
         return json.dumps({'error': f'Error: {e}'}), 500
