@@ -2,6 +2,7 @@ import json
 from flask import Flask, request
 import cld3
 import spacy
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 en = spacy.load("en_core_web_lg")
 zh = spacy.load("zh_core_web_lg")
@@ -35,9 +36,27 @@ def tokenise():
         for text in texts:
             tokeniser = en.tokenizer if text["lang"] == "en" else zh.tokenizer
             stopwords = en.Defaults.stop_words if text["lang"] == "en" else zh.Defaults.stop_words
+            # word importance (tf-idf)
+            vec = TfidfVectorizer(tokenizer=tokeniser, min_df=1, use_idf=True)
+            corpus = text["text"].split("\n")
+            vec.fit_transform(corpus)
+            idf = vec.idf_
+            d = {}
+
+            for k, v in vec.vocabulary_.items():
+                d[k.orth_] = idf[v] + d.get(k.orth_, 0)
 
             tokens = tokeniser(text["text"])
-            output.append(sorted([{"token": token.orth_, "score": token.rank} for token in tokens if not token.is_space and
+            # dedupe tokens
+            t = {}
+            tokens_uniq = []
+            for token in tokens:
+                if token.orth_ not in t:
+                    t[token.orth_] = True
+                    tokens_uniq.append(token)
+
+            # push tokens to output
+            output.append(sorted([{"token": token.orth_, "score": d[token.orth_]} for token in tokens_uniq if not token.is_space and
                                   not token.is_punct and len(token.orth_) >= (2 if text["lang"] == "zh" else 3) and (token.orth_ not in stopwords)], key=lambda x: x["score"], reverse=True))
         return json.dumps(output)
     except Exception as e:
