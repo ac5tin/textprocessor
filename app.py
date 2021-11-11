@@ -37,7 +37,8 @@ def tokenise():
             tokeniser = en.tokenizer if text["lang"] == "en" else zh.tokenizer
             stopwords = en.Defaults.stop_words if text["lang"] == "en" else zh.Defaults.stop_words
             # word importance (tf-idf)
-            vec = TfidfVectorizer(tokenizer=tokeniser, min_df=1, use_idf=True)
+            vec = TfidfVectorizer(tokenizer=tokeniser,
+                                  min_df=1, use_idf=True, stop_words=stopwords)
             corpus = text["text"].split("\n")
             vec.fit_transform(corpus)
             idf = vec.idf_
@@ -51,13 +52,30 @@ def tokenise():
             t = {}
             tokens_uniq = []
             for token in tokens:
-                if token.orth_ not in t:
-                    t[token.orth_] = True
+                if token.orth_.lower() not in t:
+                    t[token.orth_.lower()] = True
                     tokens_uniq.append(token)
 
             # push tokens to output
-            output.append(sorted([{"token": token.orth_, "score": d[token.orth_]} for token in tokens_uniq if not token.is_space and
+            output.append(sorted([{"token": token.orth_.lower(), "score": d[token.orth_.lower()]} for token in tokens_uniq if not token.is_space and
                                   not token.is_punct and len(token.orth_) >= (2 if text["lang"] == "zh" else 3) and (token.orth_ not in stopwords)], key=lambda x: x["score"], reverse=True))
+        return json.dumps(output)
+    except Exception as e:
+        return json.dumps({'error': f'Error: {e}'}), 500
+
+
+@app.route("/api/entity", methods=['POST'])
+def entity():
+    try:
+        texts = request.get_json(force=True)
+        output = []
+
+        for text in texts:
+            tokeniser = en if text["lang"] == "en" else zh
+            tokens = tokeniser(text["text"])
+
+            output.append([(tk.lemma_ if len(tk.lemma_) > 0 else tk.text).lower().strip(
+            ) for tk in tokens.ents if not tk.text.isdecimal() and not len(tk.text.strip()) == 0])
         return json.dumps(output)
     except Exception as e:
         return json.dumps({'error': f'Error: {e}'}), 500
