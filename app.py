@@ -46,13 +46,17 @@ def tokenise():
             d = {}
 
             for k, v in vec.vocabulary_.items():
-                text = "".join(
+                word = "".join(
                     [ch.strip() for ch in k.orth_ if ch not in string.punctuation])
-                if text == "":
+                if word == "":
                     continue
-                if text in stopwords:
+                if word in stopwords:
                     continue
-                d[text] = idf[v] + d.get(text, 0)
+
+                minlen = 2
+                if len(word) < minlen:
+                    continue
+                d[word] = idf[v] + d.get(word, 0)
 
             # d -> array
             darr = []
