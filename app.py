@@ -52,7 +52,7 @@ def tokenise():
                     continue
                 if text in stopwords:
                     continue
-                d[k.orth_] = idf[v] + d.get(k.orth_, 0)
+                d[text] = idf[v] + d.get(text, 0)
 
             # d -> array
             darr = []
