@@ -22,9 +22,9 @@ def langdet():
             lang = cld3.get_language(text)
             output.append(lang.language)
 
-        return json.dumps(output)
+        return jsonify(output)
     except Exception as e:
-        return json.dumps({'error': f'Error: {e}'}), 500
+        return jsonify({'error': f'Error: {e}'}), 500
 
 
 @app.route("/api/tokenise", methods=['POST'])
@@ -67,7 +67,7 @@ def tokenise():
             output.append(darr)
         return jsonify(output)
     except Exception as e:
-        return json.dumps({'error': f'Error: {e}'}), 500
+        return jsonify({'error': f'Error: {e}'}), 500
 
 
 @app.route("/api/entity", methods=['POST'])
@@ -82,9 +82,9 @@ def entity():
 
             output.append([(tk.lemma_ if len(tk.lemma_) > 0 else tk.text).lower().strip(
             ) for tk in tokens.ents if not tk.text.isdecimal() and not len(tk.text.strip()) == 0])
-        return json.dumps(output)
+        return jsonify(output)
     except Exception as e:
-        return json.dumps({'error': f'Error: {e}'}), 500
+        return jsonify({'error': f'Error: {e}'}), 500
 
 
 @app.route("/ping", methods=['GET'])
