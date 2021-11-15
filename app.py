@@ -1,5 +1,6 @@
 import json
-from flask import Flask, request
+import string
+from flask import Flask, request, jsonify
 import cld3
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -45,21 +46,22 @@ def tokenise():
             d = {}
 
             for k, v in vec.vocabulary_.items():
+                text = "".join(
+                    [ch.strip() for ch in k.orth_ if ch not in string.punctuation])
+                if text == "":
+                    continue
+                if text in stopwords:
+                    continue
                 d[k.orth_] = idf[v] + d.get(k.orth_, 0)
 
-            tokens = tokeniser(text["text"])
-            # dedupe tokens
-            t = {}
-            tokens_uniq = []
-            for token in tokens:
-                if token.orth_.lower() not in t:
-                    t[token.orth_.lower()] = True
-                    tokens_uniq.append(token)
+            # d -> array
+            darr = []
+            for k, v in d.items():
+                darr.append({"token": k, "score": v})
 
-            # push tokens to output
-            output.append(sorted([{"token": token.orth_.lower(), "score": d[token.orth_.lower()]} for token in tokens_uniq if not token.is_space and
-                                  not token.is_punct and len(token.orth_) >= (2 if text["lang"] == "zh" else 3) and (token.orth_ not in stopwords)], key=lambda x: x["score"], reverse=True))
-        return json.dumps(output)
+            darr = sorted(darr, key=lambda x: x["score"], reverse=True)
+            output.append(darr)
+        return jsonify(output)
     except Exception as e:
         return json.dumps({'error': f'Error: {e}'}), 500
 
