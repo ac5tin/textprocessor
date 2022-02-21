@@ -14,3 +14,5 @@ lint:
 
 docker-build:
 	docker build -t textprocessor .
+docker-buildpush:
+	docker buildx build --platform linux/amd64,linux/arm64 -t ac5tin/textprocessor . --push
