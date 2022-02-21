@@ -35,7 +35,19 @@ def tokenise():
 
         for text in texts:
             lang = en if text["lang"] == "en" else zh
-            darr = Scorer.tfidf(text["text"], lang)
+
+            # ==== use TFIDF ====
+            # darr = Scorer.tfidf(text["text"], lang)
+
+            # ==== use BM25 ====
+            # tokenise and strip stopwords
+            lst: list[str] = []
+            tokens = lang(text["text"])
+            for tk in tokens:
+                if not tk.is_punct | tk.is_space | len(tk.orth_) < 2 | tk.is_stop:
+                    lst.append(tk.orth_)
+            scorer = Scorer(lst)
+            darr = scorer.bm25()
 
             darr = sorted(darr, key=lambda x: x["score"], reverse=True)
             output.append(darr)
