@@ -12,9 +12,9 @@ class Scorer:
 
     def bm25(self) -> list[dict[str, str | float]]:
         bm25 = BM25Okapi(corpus=self.data)
-        lst: list[dict[str, str | float]]
+        lst: list[dict[str, str | float]] = []
 
-        for q in self.data:
+        for q in list(set(self.data)):
             qscore: float = sum(bm25.get_scores(q))
             lst.append({"token": q, "score": qscore})
         return lst
