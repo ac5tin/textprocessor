@@ -1,9 +1,8 @@
-import json
-import string
 from flask import Flask, request, jsonify
 import cld3
 import spacy
-from sklearn.feature_extraction.text import TfidfVectorizer
+from lib.scorer import Scorer
+
 
 en = spacy.load("en_core_web_lg")
 zh = spacy.load("zh_core_web_lg")
@@ -35,33 +34,8 @@ def tokenise():
         output = []
 
         for text in texts:
-            tokeniser = en.tokenizer if text["lang"] == "en" else zh.tokenizer
-            stopwords = en.Defaults.stop_words if text["lang"] == "en" else zh.Defaults.stop_words
-            # word importance (tf-idf)
-            vec = TfidfVectorizer(tokenizer=tokeniser,
-                                  min_df=1, use_idf=True, stop_words=stopwords)
-            corpus = text["text"].split("\n")
-            vec.fit_transform(corpus)
-            idf = vec.idf_
-            d = {}
-
-            for k, v in vec.vocabulary_.items():
-                word = "".join(
-                    [ch.strip() for ch in k.orth_ if ch not in string.punctuation])
-                if word == "":
-                    continue
-                if word in stopwords:
-                    continue
-
-                minlen = 2
-                if len(word) < minlen:
-                    continue
-                d[word] = idf[v] + d.get(word, 0)
-
-            # d -> array
-            darr = []
-            for k, v in d.items():
-                darr.append({"token": k, "score": v})
+            lang = en if text["lang"] == "en" else zh
+            darr = Scorer.tfidf(text["text"], lang)
 
             darr = sorted(darr, key=lambda x: x["score"], reverse=True)
             output.append(darr)
