@@ -1,9 +1,13 @@
-FROM python:3.9
+FROM python:3.10
 
 WORKDIR /app
 
 ADD . /app
 
+# protoc
+RUN apt-get update && apt-get install -y protobuf-compiler
+
+# python dependencies
 RUN pip install pip --upgrade
 RUN pip install Cython
 RUN pip install gunicorn
